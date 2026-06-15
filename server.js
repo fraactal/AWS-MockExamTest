@@ -11,7 +11,6 @@ const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, "data", 
 const CERTIFICATION_IDS = ["clf-c02", "saa-c03"];
 const SESSION_COOKIE_NAME = "aws_prep_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30;
-const ALLOW_SELF_REGISTRATION = process.env.ALLOW_SELF_REGISTRATION === "true";
 const SEEDED_DEMO_USER = {
   email: "jonathan.valdes.o@gmail.com",
   password: "jonas2026!",
@@ -69,7 +68,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     databasePath: DATABASE_PATH,
-    registrationOpen: isRegistrationOpen()
+    registrationOpen: false
   });
 });
 
@@ -78,47 +77,10 @@ app.get("/api/auth/session", (req, res) => {
 });
 
 app.post("/api/auth/register", (req, res) => {
-  if (!isRegistrationOpen()) {
-    return res.status(403).json({
-      ok: false,
-      error: "registration_closed"
-    });
-  }
-
-  const payload = normalizeCredentials(req.body || {});
-  if (!payload.ok) {
-    return res.status(400).json({
-      ok: false,
-      error: payload.error
-    });
-  }
-
-  const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(payload.email);
-  if (existing) {
-    return res.status(409).json({
-      ok: false,
-      error: "email_in_use"
-    });
-  }
-
-  const now = new Date().toISOString();
-  const userId = crypto.randomUUID();
-  db.prepare(`
-    INSERT INTO users (id, email, password_hash, display_name, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(
-    userId,
-    payload.email,
-    hashPassword(payload.password),
-    payload.displayName,
-    now,
-    now
-  );
-
-  ensureUserStateRow(userId);
-  const user = getUserById(userId);
-  createSession(res, userId);
-  return res.status(201).json(buildSessionPayload(user));
+  return res.status(403).json({
+    ok: false,
+    error: "registration_closed"
+  });
 });
 
 app.post("/api/auth/login", (req, res) => {
@@ -269,18 +231,13 @@ function requireAuth(req, res, next) {
 function buildSessionPayload(user) {
   return {
     authenticated: Boolean(user),
-    registrationOpen: isRegistrationOpen(),
+    registrationOpen: false,
     user: user ? {
       id: user.id,
       email: user.email,
       displayName: user.displayName
     } : null
   };
-}
-
-function isRegistrationOpen() {
-  const row = db.prepare("SELECT COUNT(*) AS total FROM users").get();
-  return row.total === 0 || ALLOW_SELF_REGISTRATION;
 }
 
 function normalizeCredentials(body, options = {}) {

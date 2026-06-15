@@ -103,7 +103,6 @@ npm start
 Variables opcionales:
 
 ```bash
-set ALLOW_SELF_REGISTRATION=true
 set DATABASE_PATH=.\data\prep.db
 set PORT=3080
 ```
@@ -114,11 +113,12 @@ set PORT=3080
 http://localhost:3080
 ```
 
-4. Primer acceso:
+4. Acceso demo:
 
-- si no existe ningun usuario, la app mostrara un formulario para crear la primera cuenta
-- luego el historial y los objetivos quedaran ligados a ese usuario
-- si quieres permitir varias cuentas para una demo compartida, usa `ALLOW_SELF_REGISTRATION=true`
+- la app trae un usuario demo precargado
+- correo: `jonathan.valdes.o@gmail.com`
+- clave: `jonas2026!`
+- no se permite crear nuevos usuarios desde la interfaz
 
 ## Como ejecutar con Docker
 
@@ -147,15 +147,6 @@ La base SQLite persistira en:
 .\runtime-data\prep.db
 ```
 
-Para habilitar registro de mas de un usuario en Docker Compose, agrega:
-
-```yaml
-environment:
-  PORT: 3080
-  DATABASE_PATH: /data/prep.db
-  ALLOW_SELF_REGISTRATION: "true"
-```
-
 ## API
 
 - `GET /api/auth/session`
@@ -176,6 +167,8 @@ El despliegue mas simple en AWS para demo personal es:
 - o `ECS Fargate` con almacenamiento persistente si luego quieres automatizar CI/CD
 
 Si mantienes SQLite para demo, evita escalar a varias instancias simultaneas del contenedor.
+
+La demo publicada queda pensada para un solo usuario controlado, sin alta pública.
 
 ## Trazabilidad documental
 

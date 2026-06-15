@@ -218,75 +218,43 @@ function renderAuthGate(message = "") {
   document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
   els.authView.classList.remove("hidden");
 
-  const registrationMarkup = session.registrationOpen ? `
-    <article class="auth-card">
-      <p class="eyebrow">Crear acceso</p>
-      <h3>Activar la demo persistente</h3>
-      <p class="muted">Como esta es la primera cuenta disponible, puedes crear el usuario que quedara persistido en SQLite.</p>
-      <form id="register-form">
-        <label class="form-field">
-          <span>Nombre visible</span>
-          <input type="text" name="displayName" placeholder="Jonathan" required minlength="2">
-        </label>
-        <label class="form-field">
-          <span>Email</span>
-          <input type="email" name="email" placeholder="tu@correo.com" required>
-        </label>
-        <label class="form-field">
-          <span>Clave</span>
-          <input type="password" name="password" placeholder="Minimo 8 caracteres" required minlength="8">
-        </label>
-        <div class="action-row">
-          <button class="primary-button" type="submit">Crear cuenta y entrar</button>
-        </div>
-      </form>
-    </article>
-  ` : `
-    <article class="auth-card">
-      <p class="eyebrow">Acceso</p>
-      <h3>Entrar a tu historial</h3>
-      <p class="muted">La base SQLite ahora guarda tus examenes, objetivos y progreso bajo tu usuario autenticado.</p>
-      <form id="login-form">
-        <label class="form-field">
-          <span>Email</span>
-          <input type="email" name="email" placeholder="tu@correo.com" required>
-        </label>
-        <label class="form-field">
-          <span>Clave</span>
-          <input type="password" name="password" placeholder="Tu clave" required minlength="8">
-        </label>
-        <div class="action-row">
-          <button class="primary-button" type="submit">Entrar</button>
-        </div>
-      </form>
-    </article>
-  `;
-
   els.authView.innerHTML = `
     <div class="auth-layout">
       <article class="auth-hero">
         <p class="eyebrow">AWS Mock Exam Demo</p>
         <h2>Tu progreso queda persistido por usuario</h2>
-        <p class="muted">La demo mantiene historial, objetivos, examenes en curso y progreso separado por cuenta. Esto la hace apta para publicarla con un backend real en AWS.</p>
+        <p class="muted">La demo mantiene historial, objetivos, examenes en curso y progreso separado por cuenta. El acceso esta cerrado y solo acepta el usuario demo precargado.</p>
         <ul class="auth-points">
           <li>Sesion persistente por cookie segura del backend</li>
           <li>Historial SQLite aislado por usuario</li>
-          <li>Primer acceso crea la cuenta inicial de la demo</li>
+          <li>Registro deshabilitado para mantener la demo controlada</li>
         </ul>
         ${message ? `<div class="notice">${message}</div>` : ""}
       </article>
-      ${registrationMarkup}
+      <article class="auth-card">
+        <p class="eyebrow">Acceso</p>
+        <h3>Entrar a tu historial</h3>
+        <p class="muted">La base SQLite guarda tus examenes, objetivos y progreso bajo el usuario demo configurado.</p>
+        <form id="login-form">
+          <label class="form-field">
+            <span>Email</span>
+            <input type="email" name="email" placeholder="tu@correo.com" required>
+          </label>
+          <label class="form-field">
+            <span>Clave</span>
+            <input type="password" name="password" placeholder="Tu clave" required minlength="8">
+          </label>
+          <div class="action-row">
+            <button class="primary-button" type="submit">Entrar</button>
+          </div>
+        </form>
+      </article>
     </div>
   `;
 
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", handleLoginSubmit);
-  }
-
-  const registerForm = document.getElementById("register-form");
-  if (registerForm) {
-    registerForm.addEventListener("submit", handleRegisterSubmit);
   }
 }
 
@@ -304,24 +272,6 @@ async function handleLoginSubmit(event) {
     showToast("Sesión iniciada", "Tu historial persistente ya quedó cargado.");
   } catch (error) {
     showToast("No se pudo entrar", humanizeAuthError(error), "error");
-  }
-}
-
-async function handleRegisterSubmit(event) {
-  event.preventDefault();
-  const formData = new FormData(event.currentTarget);
-  try {
-    session = await authenticate("/api/auth/register", {
-      displayName: formData.get("displayName"),
-      email: formData.get("email"),
-      password: formData.get("password")
-    });
-    const saved = await loadState();
-    state = mergeState(saved);
-    renderAuthenticatedApp();
-    showToast("Cuenta creada", "La demo quedó lista con persistencia para tu usuario.");
-  } catch (error) {
-    showToast("No se pudo crear la cuenta", humanizeAuthError(error), "error");
   }
 }
 
@@ -363,7 +313,7 @@ function humanizeAuthError(error) {
     return "Correo o clave incorrectos.";
   }
   if (code === "registration_closed") {
-    return "La creación de cuentas está cerrada en esta demo.";
+    return "La creación de cuentas está deshabilitada en esta demo.";
   }
   return "Intenta nuevamente en unos segundos.";
 }
