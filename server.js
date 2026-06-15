@@ -12,6 +12,11 @@ const CERTIFICATION_IDS = ["clf-c02", "saa-c03"];
 const SESSION_COOKIE_NAME = "aws_prep_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30;
 const ALLOW_SELF_REGISTRATION = process.env.ALLOW_SELF_REGISTRATION === "true";
+const SEEDED_DEMO_USER = {
+  email: "jonathan.valdes.o@gmail.com",
+  password: "jonas2026!",
+  displayName: "jonas"
+};
 
 const defaultState = createDefaultState();
 
@@ -52,6 +57,7 @@ db.exec(`
 `);
 
 ensureLegacyStateRow();
+ensureSeededDemoUser();
 cleanupExpiredSessions();
 
 const app = express();
@@ -209,6 +215,34 @@ function ensureLegacyStateRow() {
     INSERT INTO app_state (id, state_json, updated_at)
     VALUES (1, ?, ?)
   `).run(JSON.stringify(defaultState), new Date().toISOString());
+}
+
+function ensureSeededDemoUser() {
+  const existingByEmail = db.prepare(`
+    SELECT id
+    FROM users
+    WHERE email = ?
+  `).get(SEEDED_DEMO_USER.email);
+
+  if (existingByEmail) {
+    ensureUserStateRow(existingByEmail.id);
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const userId = crypto.randomUUID();
+  db.prepare(`
+    INSERT INTO users (id, email, password_hash, display_name, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    userId,
+    SEEDED_DEMO_USER.email,
+    hashPassword(SEEDED_DEMO_USER.password),
+    SEEDED_DEMO_USER.displayName,
+    now,
+    now
+  );
+  ensureUserStateRow(userId);
 }
 
 function cleanupExpiredSessions() {
