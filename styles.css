@@ -105,6 +105,37 @@ select {
   display: none;
 }
 
+.account-shell.hidden,
+.auth-view.hidden {
+  display: none;
+}
+
+.account-shell {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding: 18px 22px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.account-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.account-email {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .workspace-hero {
   display: flex;
   justify-content: space-between;
@@ -331,6 +362,76 @@ select {
 
 .home-hero p {
   max-width: 760px;
+}
+
+.auth-view {
+  min-height: calc(100vh - 88px);
+  display: grid;
+  align-items: center;
+}
+
+.auth-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 440px);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.auth-hero,
+.auth-card {
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  border-radius: var(--radius-xl);
+}
+
+.auth-hero {
+  padding: 38px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 153, 0, 0.16), transparent 28%),
+    linear-gradient(135deg, rgba(35, 47, 62, 0.98), rgba(53, 80, 122, 0.94));
+  color: #f7fafc;
+}
+
+.auth-hero .eyebrow,
+.auth-hero .muted,
+.auth-hero .auth-points li {
+  color: rgba(247, 250, 252, 0.82);
+}
+
+.auth-hero h2 {
+  margin: 8px 0 14px;
+  font-size: clamp(34px, 4vw, 56px);
+  line-height: 1.02;
+}
+
+.auth-points {
+  margin: 26px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.auth-card {
+  padding: 28px;
+}
+
+.auth-card h3 {
+  margin: 8px 0 12px;
+}
+
+.auth-card form {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-card .action-row {
+  margin-top: 10px;
+}
+
+.auth-card .notice {
+  margin-top: 12px;
 }
 
 .grid {
@@ -580,6 +681,7 @@ select {
 }
 
 @media (max-width: 1180px) {
+  .auth-layout,
   .workspace-toolbar,
   .workspace-summary,
   .grid.columns-4,
@@ -613,6 +715,8 @@ select {
   }
 
   .workspace-hero,
+  .account-shell,
+  .account-actions,
   .workspace-meta,
   .workspace-brand,
   .page-header {

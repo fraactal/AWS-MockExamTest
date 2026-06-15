@@ -13,6 +13,18 @@
 <body>
   <div class="app-frame">
     <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
+    <section id="auth-view" class="auth-view"></section>
+
+    <header id="account-shell" class="account-shell hidden">
+      <div>
+        <p class="eyebrow">Demo persistente</p>
+        <strong id="account-name">Sesión</strong>
+      </div>
+      <div class="account-actions">
+        <span id="account-email" class="account-email"></span>
+        <button id="logout-button" class="ghost-button" type="button">Cerrar sesión</button>
+      </div>
+    </header>
 
     <header id="workspace-shell" class="workspace-shell hidden">
       <section class="workspace-hero">

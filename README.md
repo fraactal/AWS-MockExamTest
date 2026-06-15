@@ -8,6 +8,7 @@ Aplicacion web local para preparar varias certificaciones AWS en una sola experi
 Incluye:
 
 - selector de certificacion en el inicio
+- login basico por usuario
 - simulacion completa por certificacion
 - mini tests por dominio
 - modo de refuerzo por debilidades
@@ -53,10 +54,12 @@ Incluye:
 
 ## Persistencia
 
-La aplicacion usa una sola base SQLite y separa el estado por certificacion dentro del mismo registro persistido.
+La aplicacion usa SQLite y ahora guarda el estado por usuario autenticado.
 
 Se guarda:
 
+- cuenta del usuario
+- sesion persistente por cookie HTTP-only
 - certificacion actualmente seleccionada
 - configuracion de objetivos por certificacion
 - historial de examenes por certificacion
@@ -97,11 +100,25 @@ npm install
 npm start
 ```
 
+Variables opcionales:
+
+```bash
+set ALLOW_SELF_REGISTRATION=true
+set DATABASE_PATH=.\data\prep.db
+set PORT=3080
+```
+
 3. Abrir:
 
 ```text
 http://localhost:3080
 ```
+
+4. Primer acceso:
+
+- si no existe ningun usuario, la app mostrara un formulario para crear la primera cuenta
+- luego el historial y los objetivos quedaran ligados a ese usuario
+- si quieres permitir varias cuentas para una demo compartida, usa `ALLOW_SELF_REGISTRATION=true`
 
 ## Como ejecutar con Docker
 
@@ -130,11 +147,35 @@ La base SQLite persistira en:
 .\runtime-data\prep.db
 ```
 
+Para habilitar registro de mas de un usuario en Docker Compose, agrega:
+
+```yaml
+environment:
+  PORT: 3080
+  DATABASE_PATH: /data/prep.db
+  ALLOW_SELF_REGISTRATION: "true"
+```
+
 ## API
 
+- `GET /api/auth/session`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
 - `GET /api/health`
 - `GET /api/state`
 - `PUT /api/state`
+
+## Demo en AWS
+
+Para una demo funcional y persistente, GitHub Pages no alcanza porque esta app necesita backend, sesiones y SQLite.
+
+El despliegue mas simple en AWS para demo personal es:
+
+- `EC2` con Docker Compose si quieres velocidad y control directo
+- o `ECS Fargate` con almacenamiento persistente si luego quieres automatizar CI/CD
+
+Si mantienes SQLite para demo, evita escalar a varias instancias simultaneas del contenedor.
 
 ## Trazabilidad documental
 

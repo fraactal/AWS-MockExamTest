@@ -14,8 +14,18 @@ let state = createDefaultState();
 let saveQueue = Promise.resolve();
 let currentView = "home";
 let toastTimer = null;
+let session = {
+  authenticated: false,
+  registrationOpen: false,
+  user: null
+};
 
 const els = {
+  authView: document.getElementById("auth-view"),
+  accountShell: document.getElementById("account-shell"),
+  accountName: document.getElementById("account-name"),
+  accountEmail: document.getElementById("account-email"),
+  logoutButton: document.getElementById("logout-button"),
   workspaceShell: document.getElementById("workspace-shell"),
   selectedExamCode: document.getElementById("selected-exam-code"),
   selectedExamName: document.getElementById("selected-exam-name"),
@@ -60,15 +70,40 @@ function createDefaultExamState(examId) {
 async function bootstrapApp() {
   renderLoadingState();
   try {
+    session = await loadSession();
+    if (!session.authenticated) {
+      state = createDefaultState();
+      renderAuthGate();
+      return;
+    }
+
     const saved = await loadState();
     state = mergeState(saved);
-  } catch {
+  } catch (error) {
     state = createDefaultState();
+    if (!session.authenticated) {
+      renderAuthGate();
+      return;
+    }
+    if (session.authenticated) {
+      showToast("No se pudo cargar", "Se iniciara con un estado base hasta recuperar la persistencia.", "error");
+    }
   }
-  refreshSidebar();
-  renderApp();
-  currentView = state.currentView || (state.selectedExamId ? "dashboard" : "home");
-  setView(currentView);
+  renderAuthenticatedApp();
+}
+
+async function loadSession() {
+  const response = await fetch("/api/auth/session", {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Session request failed with ${response.status}`);
+  }
+
+  return response.json();
 }
 
 async function loadState() {
@@ -77,6 +112,11 @@ async function loadState() {
       Accept: "application/json"
     }
   });
+
+  if (response.status === 401) {
+    await handleUnauthorized();
+    throw new Error("Unauthorized");
+  }
 
   if (!response.ok) {
     throw new Error(`State request failed with ${response.status}`);
@@ -145,6 +185,208 @@ function bindNavigation() {
     button.addEventListener("click", () => setView(button.dataset.view));
   });
   els.exitWorkspace.addEventListener("click", exitWorkspace);
+  els.logoutButton.addEventListener("click", logout);
+}
+
+function renderAuthenticatedApp() {
+  syncAccountShell();
+  els.authView.classList.add("hidden");
+  refreshSidebar();
+  renderApp();
+  currentView = state.currentView || (state.selectedExamId ? "dashboard" : "home");
+  setView(currentView);
+}
+
+function syncAccountShell() {
+  const isAuthenticated = Boolean(session.authenticated && session.user);
+  els.accountShell.classList.toggle("hidden", !isAuthenticated);
+  if (!isAuthenticated) {
+    els.accountName.textContent = "Sesión";
+    els.accountEmail.textContent = "";
+    return;
+  }
+
+  els.accountName.textContent = session.user.displayName || session.user.email;
+  els.accountEmail.textContent = session.user.email;
+}
+
+function renderAuthGate(message = "") {
+  session.authenticated = false;
+  session.user = null;
+  syncAccountShell();
+  els.workspaceShell.classList.add("hidden");
+  document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
+  els.authView.classList.remove("hidden");
+
+  const registrationMarkup = session.registrationOpen ? `
+    <article class="auth-card">
+      <p class="eyebrow">Crear acceso</p>
+      <h3>Activar la demo persistente</h3>
+      <p class="muted">Como esta es la primera cuenta disponible, puedes crear el usuario que quedara persistido en SQLite.</p>
+      <form id="register-form">
+        <label class="form-field">
+          <span>Nombre visible</span>
+          <input type="text" name="displayName" placeholder="Jonathan" required minlength="2">
+        </label>
+        <label class="form-field">
+          <span>Email</span>
+          <input type="email" name="email" placeholder="tu@correo.com" required>
+        </label>
+        <label class="form-field">
+          <span>Clave</span>
+          <input type="password" name="password" placeholder="Minimo 8 caracteres" required minlength="8">
+        </label>
+        <div class="action-row">
+          <button class="primary-button" type="submit">Crear cuenta y entrar</button>
+        </div>
+      </form>
+    </article>
+  ` : `
+    <article class="auth-card">
+      <p class="eyebrow">Acceso</p>
+      <h3>Entrar a tu historial</h3>
+      <p class="muted">La base SQLite ahora guarda tus examenes, objetivos y progreso bajo tu usuario autenticado.</p>
+      <form id="login-form">
+        <label class="form-field">
+          <span>Email</span>
+          <input type="email" name="email" placeholder="tu@correo.com" required>
+        </label>
+        <label class="form-field">
+          <span>Clave</span>
+          <input type="password" name="password" placeholder="Tu clave" required minlength="8">
+        </label>
+        <div class="action-row">
+          <button class="primary-button" type="submit">Entrar</button>
+        </div>
+      </form>
+    </article>
+  `;
+
+  els.authView.innerHTML = `
+    <div class="auth-layout">
+      <article class="auth-hero">
+        <p class="eyebrow">AWS Mock Exam Demo</p>
+        <h2>Tu progreso queda persistido por usuario</h2>
+        <p class="muted">La demo mantiene historial, objetivos, examenes en curso y progreso separado por cuenta. Esto la hace apta para publicarla con un backend real en AWS.</p>
+        <ul class="auth-points">
+          <li>Sesion persistente por cookie segura del backend</li>
+          <li>Historial SQLite aislado por usuario</li>
+          <li>Primer acceso crea la cuenta inicial de la demo</li>
+        </ul>
+        ${message ? `<div class="notice">${message}</div>` : ""}
+      </article>
+      ${registrationMarkup}
+    </div>
+  `;
+
+  const loginForm = document.getElementById("login-form");
+  if (loginForm) {
+    loginForm.addEventListener("submit", handleLoginSubmit);
+  }
+
+  const registerForm = document.getElementById("register-form");
+  if (registerForm) {
+    registerForm.addEventListener("submit", handleRegisterSubmit);
+  }
+}
+
+async function handleLoginSubmit(event) {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  try {
+    session = await authenticate("/api/auth/login", {
+      email: formData.get("email"),
+      password: formData.get("password")
+    });
+    const saved = await loadState();
+    state = mergeState(saved);
+    renderAuthenticatedApp();
+    showToast("Sesión iniciada", "Tu historial persistente ya quedó cargado.");
+  } catch (error) {
+    showToast("No se pudo entrar", humanizeAuthError(error), "error");
+  }
+}
+
+async function handleRegisterSubmit(event) {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  try {
+    session = await authenticate("/api/auth/register", {
+      displayName: formData.get("displayName"),
+      email: formData.get("email"),
+      password: formData.get("password")
+    });
+    const saved = await loadState();
+    state = mergeState(saved);
+    renderAuthenticatedApp();
+    showToast("Cuenta creada", "La demo quedó lista con persistencia para tu usuario.");
+  } catch (error) {
+    showToast("No se pudo crear la cuenta", humanizeAuthError(error), "error");
+  }
+}
+
+async function authenticate(url, payload) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.error || `Authentication failed with ${response.status}`);
+    error.code = data.error || "authentication_failed";
+    throw error;
+  }
+
+  return data;
+}
+
+function humanizeAuthError(error) {
+  const code = error?.code || error?.message;
+  if (code === "invalid_email") {
+    return "Necesitas un correo valido.";
+  }
+  if (code === "invalid_password") {
+    return "La clave debe tener al menos 8 caracteres.";
+  }
+  if (code === "invalid_display_name") {
+    return "El nombre visible debe tener al menos 2 caracteres.";
+  }
+  if (code === "email_in_use") {
+    return "Ese correo ya tiene una cuenta creada.";
+  }
+  if (code === "invalid_credentials") {
+    return "Correo o clave incorrectos.";
+  }
+  if (code === "registration_closed") {
+    return "La creación de cuentas está cerrada en esta demo.";
+  }
+  return "Intenta nuevamente en unos segundos.";
+}
+
+async function logout() {
+  await fetch("/api/auth/logout", {
+    method: "POST",
+    headers: {
+      Accept: "application/json"
+    }
+  }).catch(() => undefined);
+  await handleUnauthorized();
+  showToast("Sesión cerrada", "Tu progreso sigue persistido para cuando vuelvas a entrar.", "info");
+}
+
+async function handleUnauthorized() {
+  session = await loadSession().catch(() => ({
+    authenticated: false,
+    registrationOpen: false,
+    user: null
+  }));
+  state = createDefaultState();
+  renderAuthGate("Tu sesión expiró o aún no has iniciado sesión.");
 }
 
 function showToast(title, message, tone = "success") {
@@ -211,11 +453,13 @@ function setView(viewId) {
 }
 
 function renderLoadingState() {
+  els.authView.classList.add("hidden");
+  els.accountShell.classList.add("hidden");
   const loadingMarkup = `
     <article class="card">
       <p class="eyebrow">Inicializando</p>
-      <h2>Cargando historial y configuracion</h2>
-      <p class="muted">Conectando con la base SQLite del backend.</p>
+      <h2>Validando sesión y cargando persistencia</h2>
+      <p class="muted">Conectando con el backend y preparando tu historial SQLite.</p>
     </article>
   `;
 
@@ -1305,6 +1549,10 @@ function normalizeView(view, hasSelectedExam) {
 }
 
 function saveState() {
+  if (!session.authenticated) {
+    return Promise.resolve();
+  }
+
   const payload = serializeState();
   saveQueue = saveQueue
     .catch(() => undefined)
@@ -1316,12 +1564,20 @@ function saveState() {
       },
       body: JSON.stringify(payload)
     }).then((response) => {
+      if (response.status === 401) {
+        return handleUnauthorized().then(() => {
+          throw new Error("Unauthorized");
+        });
+      }
       if (!response.ok) {
         throw new Error(`State save failed with ${response.status}`);
       }
       return response.json();
     }))
     .catch((error) => {
+      if (error.message === "Unauthorized") {
+        throw error;
+      }
       showToast("No se pudo guardar", "Revisa la conexion con el backend o el contenedor SQLite.", "error");
       throw error;
     });
