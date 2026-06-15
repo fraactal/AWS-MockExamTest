@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Multi-Cert Prep</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-frame">
+    <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
+
+    <header id="workspace-shell" class="workspace-shell hidden">
+      <section class="workspace-hero">
+        <div class="workspace-brand">
+          <div class="workspace-badge" id="selected-exam-code">AWS</div>
+          <div>
+            <h1 id="selected-exam-name">Prep Tracker</h1>
+            <p id="selected-exam-copy" class="muted">Selecciona una certificacion para ver su progreso, documentos y simuladores asociados.</p>
+          </div>
+        </div>
+        <div class="workspace-meta">
+          <div class="workspace-date">
+            <strong id="workspace-greeting">Tu espacio de estudio</strong>
+            <span id="workspace-date">Selecciona una certificacion</span>
+          </div>
+          <button id="exit-workspace" class="workspace-exit" type="button" title="Salir al inicio">Salir</button>
+        </div>
+      </section>
+
+      <section class="workspace-toolbar">
+        <nav class="workspace-nav">
+          <button class="nav-link active" data-view="dashboard">Resumen</button>
+          <button class="nav-link" data-view="exam">Examen</button>
+          <button class="nav-link" data-view="history">Historial</button>
+          <button class="nav-link" data-view="settings">Objetivos</button>
+        </nav>
+        <div id="workspace-summary" class="workspace-summary"></div>
+      </section>
+    </header>
+
+    <main class="content">
+      <section id="home-view" class="view active"></section>
+      <section id="dashboard-view" class="view"></section>
+      <section id="exam-view" class="view"></section>
+      <section id="history-view" class="view"></section>
+      <section id="settings-view" class="view"></section>
+    </main>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

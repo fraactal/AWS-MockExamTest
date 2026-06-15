@@ -1,0 +1,14 @@
+{
+  "name": "aws-cloud-practitioner-prep",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simulador AWS Cloud Practitioner con persistencia SQLite y despliegue Docker.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "express": "^4.21.2"
+  }
+}

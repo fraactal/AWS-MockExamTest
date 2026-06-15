@@ -1,0 +1,7 @@
+.git
+node_modules
+runtime-data
+data
+*.db
+*.db-shm
+*.db-wal
