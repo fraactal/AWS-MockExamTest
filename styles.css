@@ -680,7 +680,26 @@ select {
 }
 
 .password-toggle {
-  white-space: nowrap;
+  width: 52px;
+  min-width: 52px;
+  height: 48px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.password-toggle svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.password-toggle circle {
+  fill: none;
 }
 
 .notice {

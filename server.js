@@ -13,7 +13,7 @@ const SESSION_COOKIE_NAME = "aws_prep_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30;
 const SEEDED_DEMO_USER = {
   email: "jonathan.valdes.o@gmail.com",
-  password: "jonas2026!",
+  password: "Metal4ever",
   displayName: "jonas"
 };
 
@@ -224,6 +224,16 @@ function ensureSeededDemoUser() {
   `).get(SEEDED_DEMO_USER.email);
 
   if (existingByEmail) {
+    db.prepare(`
+      UPDATE users
+      SET password_hash = ?, display_name = ?, updated_at = ?
+      WHERE id = ?
+    `).run(
+      hashPassword(SEEDED_DEMO_USER.password),
+      SEEDED_DEMO_USER.displayName,
+      new Date().toISOString(),
+      existingByEmail.id
+    );
     ensureUserStateRow(existingByEmail.id);
     return;
   }

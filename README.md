@@ -117,7 +117,7 @@ http://localhost:3080
 
 - la app trae un usuario demo precargado
 - correo: `jonathan.valdes.o@gmail.com`
-- clave: `jonas2026!`
+- clave: `Metal4ever`
 - no se permite crear nuevos usuarios desde la interfaz
 
 ## Como ejecutar con Docker

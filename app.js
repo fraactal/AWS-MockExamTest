@@ -236,8 +236,7 @@ function renderAuthGate(message = "") {
         <h3>Entrar a tu historial</h3>
         <p class="muted">La base SQLite guarda tus examenes, objetivos y progreso bajo el usuario demo configurado.</p>
         <div class="notice">
-          Usuario demo: <strong>jonathan.valdes.o@gmail.com</strong><br>
-          Clave demo: <strong>jonas2026!</strong>
+          Usuario demo: <strong>jonathan.valdes.o@gmail.com</strong>
         </div>
         <form id="login-form">
           <label class="form-field">
@@ -248,7 +247,9 @@ function renderAuthGate(message = "") {
             <span>Clave</span>
             <div class="password-field">
               <input id="login-password" type="password" name="password" placeholder="Tu clave" required minlength="8">
-              <button id="toggle-password-visibility" class="ghost-button password-toggle" type="button" aria-controls="login-password" aria-pressed="false">Ver clave</button>
+              <button id="toggle-password-visibility" class="ghost-button password-toggle" type="button" aria-controls="login-password" aria-pressed="false" aria-label="Mostrar clave" title="Mostrar clave">
+                ${renderPasswordVisibilityIcon(false)}
+              </button>
             </div>
           </label>
           <div class="action-row">
@@ -296,8 +297,31 @@ function togglePasswordVisibility() {
 
   const isVisible = passwordInput.type === "text";
   passwordInput.type = isVisible ? "password" : "text";
-  toggleButton.textContent = isVisible ? "Ver clave" : "Ocultar clave";
-  toggleButton.setAttribute("aria-pressed", String(!isVisible));
+  const nextVisible = !isVisible;
+  toggleButton.innerHTML = renderPasswordVisibilityIcon(nextVisible);
+  toggleButton.setAttribute("aria-pressed", String(nextVisible));
+  toggleButton.setAttribute("aria-label", nextVisible ? "Ocultar clave" : "Mostrar clave");
+  toggleButton.title = nextVisible ? "Ocultar clave" : "Mostrar clave";
+}
+
+function renderPasswordVisibilityIcon(isVisible) {
+  if (isVisible) {
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 3l18 18"></path>
+        <path d="M10.58 10.58a2 2 0 0 0 2.84 2.84"></path>
+        <path d="M9.88 5.09A10.94 10.94 0 0 1 12 4.9c5.05 0 8.27 4.16 9.09 5.37.11.16.16.24.16.43s-.05.27-.16.43a16.88 16.88 0 0 1-3.23 3.49"></path>
+        <path d="M6.61 6.61A16.17 16.17 0 0 0 2.91 10.7c-.11.16-.16.24-.16.43s.05.27.16.43C3.73 12.77 6.95 16.9 12 16.9c1.72 0 3.22-.48 4.5-1.18"></path>
+      </svg>
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M2.91 12.44c-.11-.16-.16-.24-.16-.44s.05-.28.16-.44C3.73 10.35 6.95 6.2 12 6.2s8.27 4.15 9.09 5.36c.11.16.16.24.16.44s-.05.28-.16.44C20.27 13.65 17.05 17.8 12 17.8S3.73 13.65 2.91 12.44Z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  `;
 }
 
 async function authenticate(url, payload) {
