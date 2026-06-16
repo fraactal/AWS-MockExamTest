@@ -157,6 +157,23 @@ La base SQLite persistira en:
 - `GET /api/state`
 - `PUT /api/state`
 
+## Logs de autenticacion
+
+El backend registra intentos de login y logout en dos lugares:
+
+- consola del servidor con prefijo `auth`
+- tabla SQLite `auth_logs` dentro de la misma base `prep.db`
+
+Se registra:
+
+- evento
+- correo usado
+- resultado
+- motivo
+- IP
+- user-agent
+- timestamp
+
 ## Demo en AWS
 
 Para una demo funcional y persistente, GitHub Pages no alcanza porque esta app necesita backend, sesiones y SQLite.

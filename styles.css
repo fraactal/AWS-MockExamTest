@@ -672,6 +672,17 @@ select {
   background: rgba(255, 255, 255, 0.78);
 }
 
+.password-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.password-toggle {
+  white-space: nowrap;
+}
+
 .notice {
   padding: 14px 16px;
   border-radius: 18px;

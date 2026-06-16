@@ -53,6 +53,17 @@ db.exec(`
     updated_at TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS auth_logs (
+    id TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    email TEXT,
+    outcome TEXT NOT NULL,
+    reason TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TEXT NOT NULL
+  );
 `);
 
 ensureLegacyStateRow();
@@ -86,6 +97,12 @@ app.post("/api/auth/register", (req, res) => {
 app.post("/api/auth/login", (req, res) => {
   const payload = normalizeCredentials(req.body || {}, { requireDisplayName: false });
   if (!payload.ok) {
+    writeAuthLog(req, {
+      eventType: "login",
+      email: String(req.body?.email || "").trim().toLowerCase(),
+      outcome: "rejected",
+      reason: payload.error
+    });
     return res.status(400).json({
       ok: false,
       error: payload.error
@@ -99,6 +116,12 @@ app.post("/api/auth/login", (req, res) => {
   `).get(payload.email);
 
   if (!user || !verifyPassword(payload.password, user.passwordHash)) {
+    writeAuthLog(req, {
+      eventType: "login",
+      email: payload.email,
+      outcome: "failed",
+      reason: "invalid_credentials"
+    });
     return res.status(401).json({
       ok: false,
       error: "invalid_credentials"
@@ -107,6 +130,12 @@ app.post("/api/auth/login", (req, res) => {
 
   ensureUserStateRow(user.id);
   createSession(res, user.id);
+  writeAuthLog(req, {
+    eventType: "login",
+    email: user.email,
+    outcome: "success",
+    reason: "authenticated"
+  });
   return res.json(buildSessionPayload({
     id: user.id,
     email: user.email,
@@ -116,10 +145,17 @@ app.post("/api/auth/login", (req, res) => {
 
 app.post("/api/auth/logout", (req, res) => {
   const sessionId = req.cookies[SESSION_COOKIE_NAME];
+  const userEmail = req.user?.email || null;
   if (sessionId) {
     db.prepare("DELETE FROM sessions WHERE id = ?").run(sessionId);
   }
   clearSessionCookie(res);
+  writeAuthLog(req, {
+    eventType: "logout",
+    email: userEmail,
+    outcome: "success",
+    reason: "session_closed"
+  });
   res.json({
     ok: true
   });
@@ -141,6 +177,7 @@ app.put("/api/state", requireAuth, (req, res) => {
 app.listen(PORT, () => {
   console.log(`AWS prep app listening on http://0.0.0.0:${PORT}`);
   console.log(`SQLite database: ${DATABASE_PATH}`);
+  console.log(`Seeded demo login: ${SEEDED_DEMO_USER.email}`);
 });
 
 function createDefaultExamState() {
@@ -355,6 +392,44 @@ function getUserById(userId) {
     FROM users
     WHERE id = ?
   `).get(userId);
+}
+
+function writeAuthLog(req, details) {
+  const now = new Date().toISOString();
+  const logRecord = {
+    id: crypto.randomUUID(),
+    eventType: details.eventType,
+    email: details.email || null,
+    outcome: details.outcome,
+    reason: details.reason || null,
+    ipAddress: getClientIp(req),
+    userAgent: String(req.headers["user-agent"] || "").slice(0, 500),
+    createdAt: now
+  };
+
+  db.prepare(`
+    INSERT INTO auth_logs (id, event_type, email, outcome, reason, ip_address, user_agent, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    logRecord.id,
+    logRecord.eventType,
+    logRecord.email,
+    logRecord.outcome,
+    logRecord.reason,
+    logRecord.ipAddress,
+    logRecord.userAgent,
+    logRecord.createdAt
+  );
+
+  console.log(`[auth] ${logRecord.createdAt} event=${logRecord.eventType} outcome=${logRecord.outcome} email=${logRecord.email || "-"} ip=${logRecord.ipAddress || "-"} reason=${logRecord.reason || "-"}`);
+}
+
+function getClientIp(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").trim();
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  return req.socket?.remoteAddress || null;
 }
 
 function ensureUserStateRow(userId) {

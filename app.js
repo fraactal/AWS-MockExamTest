@@ -235,6 +235,10 @@ function renderAuthGate(message = "") {
         <p class="eyebrow">Acceso</p>
         <h3>Entrar a tu historial</h3>
         <p class="muted">La base SQLite guarda tus examenes, objetivos y progreso bajo el usuario demo configurado.</p>
+        <div class="notice">
+          Usuario demo: <strong>jonathan.valdes.o@gmail.com</strong><br>
+          Clave demo: <strong>jonas2026!</strong>
+        </div>
         <form id="login-form">
           <label class="form-field">
             <span>Email</span>
@@ -242,7 +246,10 @@ function renderAuthGate(message = "") {
           </label>
           <label class="form-field">
             <span>Clave</span>
-            <input type="password" name="password" placeholder="Tu clave" required minlength="8">
+            <div class="password-field">
+              <input id="login-password" type="password" name="password" placeholder="Tu clave" required minlength="8">
+              <button id="toggle-password-visibility" class="ghost-button password-toggle" type="button" aria-controls="login-password" aria-pressed="false">Ver clave</button>
+            </div>
           </label>
           <div class="action-row">
             <button class="primary-button" type="submit">Entrar</button>
@@ -255,6 +262,11 @@ function renderAuthGate(message = "") {
   const loginForm = document.getElementById("login-form");
   if (loginForm) {
     loginForm.addEventListener("submit", handleLoginSubmit);
+  }
+
+  const togglePasswordButton = document.getElementById("toggle-password-visibility");
+  if (togglePasswordButton) {
+    togglePasswordButton.addEventListener("click", togglePasswordVisibility);
   }
 }
 
@@ -273,6 +285,19 @@ async function handleLoginSubmit(event) {
   } catch (error) {
     showToast("No se pudo entrar", humanizeAuthError(error), "error");
   }
+}
+
+function togglePasswordVisibility() {
+  const passwordInput = document.getElementById("login-password");
+  const toggleButton = document.getElementById("toggle-password-visibility");
+  if (!passwordInput || !toggleButton) {
+    return;
+  }
+
+  const isVisible = passwordInput.type === "text";
+  passwordInput.type = isVisible ? "password" : "text";
+  toggleButton.textContent = isVisible ? "Ver clave" : "Ocultar clave";
+  toggleButton.setAttribute("aria-pressed", String(!isVisible));
 }
 
 async function authenticate(url, payload) {
