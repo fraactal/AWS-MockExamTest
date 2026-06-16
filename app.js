@@ -222,13 +222,8 @@ function renderAuthGate(message = "") {
     <div class="auth-layout">
       <article class="auth-hero">
         <p class="eyebrow">AWS Mock Exam Demo</p>
-        <h2>Tu progreso queda persistido por usuario</h2>
-        <p class="muted">La demo mantiene historial, objetivos, examenes en curso y progreso separado por cuenta. El acceso esta cerrado y solo acepta el usuario demo precargado.</p>
-        <ul class="auth-points">
-          <li>Sesion persistente por cookie segura del backend</li>
-          <li>Historial SQLite aislado por usuario</li>
-          <li>Registro deshabilitado para mantener la demo controlada</li>
-        </ul>
+        <h2>Acceso privado a la demo</h2>
+        <p class="auth-lead">Ingresa con el usuario autorizado para continuar tu progreso.</p>
         ${message ? `<div class="notice">${message}</div>` : ""}
       </article>
       <article class="auth-card">
