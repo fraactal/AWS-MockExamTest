@@ -187,6 +187,48 @@ Si mantienes SQLite para demo, evita escalar a varias instancias simultaneas del
 
 La demo publicada queda pensada para un solo usuario controlado, sin alta pública.
 
+## Jenkins y Terraform
+
+El repositorio ya queda preparado para integrarse con Jenkins centralizado:
+
+- contrato operativo en [AGENTS.md](/C:/Users/Jona/Documents/Preparacion%20AWS%20Particioner/AGENTS.md)
+- pipeline en [Jenkinsfile](/C:/Users/Jona/Documents/Preparacion%20AWS%20Particioner/Jenkinsfile)
+- infraestructura por ambiente en [infra/terraform](/C:/Users/Jona/Documents/Preparacion%20AWS%20Particioner/infra/terraform)
+- despliegue remoto en [scripts/deploy/remote-deploy.sh](/C:/Users/Jona/Documents/Preparacion%20AWS%20Particioner/scripts/deploy/remote-deploy.sh)
+
+Mapeo de ramas:
+
+- `develop` -> `demo`
+- `staging` -> `staging`
+- `main` -> `production`
+
+El flujo esperado del pipeline es:
+
+1. checkout
+2. validación básica del repo
+3. `terraform init/validate/plan`
+4. `terraform apply`
+5. empaquetado de la app
+6. despliegue por `ssh` sobre EC2 usando Docker Compose
+
+Para usarlo en Jenkins:
+
+- crear las credenciales listadas en `AGENTS.md`
+- cargar como secret file el backend Terraform de cada ambiente
+- cargar como secret file el `.env` de cada ambiente
+- cargar una credencial AWS por ambiente
+- cargar una credencial SSH por ambiente para despliegue
+
+Ejemplos de backend remoto por ambiente:
+
+- [demo.backend.hcl.example](/C:/Users/Jona/Documents/Preparacion%20AWS%20Particioner/infra/terraform/environments/demo.backend.hcl.example)
+- [staging.backend.hcl.example](/C:/Users/Jona/Documents/Preparacion%20AWS%20Particioner/infra/terraform/environments/staging.backend.hcl.example)
+- [production.backend.hcl.example](/C:/Users/Jona/Documents/Preparacion%20AWS%20Particioner/infra/terraform/environments/production.backend.hcl.example)
+
+Ejemplo de `.env` para el deploy:
+
+- [app.env.example](/C:/Users/Jona/Documents/Preparacion%20AWS%20Particioner/deploy/env/app.env.example)
+
 ## Trazabilidad documental
 
 La app ya diferencia dos conjuntos documentales y dos blueprints oficiales.

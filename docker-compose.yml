@@ -1,12 +1,13 @@
 services:
   aws-prep-app:
     build: .
-    container_name: aws-prep-app
+    container_name: ${APP_CONTAINER_NAME:-aws-prep-app}
     ports:
-      - "3080:3080"
+      - "${APP_PORT:-3080}:3080"
     environment:
       PORT: 3080
       DATABASE_PATH: /data/prep.db
+      NODE_ENV: ${NODE_ENV:-production}
     volumes:
       - ./runtime-data:/data
     restart: unless-stopped

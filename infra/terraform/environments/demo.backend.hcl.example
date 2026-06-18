@@ -1,0 +1,5 @@
+bucket         = "replace-with-demo-tfstate-bucket"
+key            = "aws-mockexamtest/demo/terraform.tfstate"
+region         = "us-east-1"
+encrypt        = true
+dynamodb_table = "replace-with-demo-tf-locks"

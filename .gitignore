@@ -4,3 +4,8 @@ data/
 *.db
 *.db-shm
 *.db-wal
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
